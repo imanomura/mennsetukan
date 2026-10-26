@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>KOTO CLIP | 面接時刻記録</title>
+    <style>
+      :root {
+        font-family:
+          system-ui,
+          -apple-system,
+          'Yu Gothic UI',
+          Meiryo,
+          sans-serif;
+        color: #18231d;
+        background: #f0f2ec;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      .wrap {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 28px 18px 60px;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #d9ded5;
+        padding-bottom: 16px;
+      }
+      .brand {
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+      .tag {
+        font-size: 12px;
+        color: #68736b;
+      }
+      h1 {
+        font-size: clamp(26px, 4vw, 38px);
+        margin: 28px 0 8px;
+      }
+      .lead {
+        color: #68736b;
+        line-height: 1.7;
+      }
+      .panel {
+        background: #fbfcf8;
+        border: 1px solid #d9ded5;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 12px 36px #192a1f0d;
+      }
+      .field {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      label {
+        font-weight: 700;
+        font-size: 13px;
+      }
+      input {
+        font: inherit;
+        padding: 12px;
+        border: 1px solid #cbd3c8;
+        border-radius: 6px;
+        min-width: 0;
+      }
+      #session {
+        flex: 1;
+        min-width: 190px;
+      }
+      .btn {
+        font: inherit;
+        font-weight: 750;
+        border: 0;
+        border-radius: 7px;
+        padding: 13px 16px;
+        cursor: pointer;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .primary {
+        background: #294d39;
+        color: white;
+      }
+      .big {
+        width: 100%;
+        min-height: 76px;
+        font-size: clamp(19px, 3vw, 25px);
+        margin-top: 12px;
+      }
+      .question-btn {
+        background: #c8ed76;
+        color: #18231d;
+      }
+      .answer-btn {
+        background: #8cc9f2;
+        color: #18231d;
+      }
+      .secondary {
+        background: #e7ebe3;
+        color: #18231d;
+      }
+      .status {
+        margin: 14px 0 0;
+        min-height: 24px;
+        color: #526057;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .status.error {
+        color: #b33f31;
+      }
+      .progress {
+        font-size: 14px;
+        color: #68736b;
+      }
+      .qnum {
+        font-size: 14px;
+        color: #68736b;
+      }
+      .question {
+        font-size: 24px;
+        font-weight: 850;
+        margin: 0;
+      }
+      .question-list {
+        display: grid;
+        gap: 16px;
+        margin-top: 18px;
+      }
+      .question-card {
+        border: 1px solid #d9ded5;
+        border-radius: 10px;
+        padding: 16px;
+        scroll-margin-top: 16px;
+      }
+      .question-card h2 {
+        margin: 0 0 12px;
+        font-size: 21px;
+      }
+      .question-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .question-actions .button-label {
+        margin: 0 0 6px;
+      }
+      .question-actions .btn {
+        width: 100%;
+        min-height: 58px;
+      }
+      .question-events {
+        margin-top: 12px;
+      }
+      .log {
+        margin-top: 18px;
+        border-top: 1px solid #d9ded5;
+        padding-top: 14px;
+      }
+      .event {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #edf0e9;
+        font-size: 13px;
+      }
+      .event time {
+        color: #68736b;
+        text-align: right;
+      }
+      .event-main {
+        display: flex;
+        flex: 1;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .event-edit {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .event-edit input {
+        padding: 7px;
+      }
+      .hint {
+        font-size: 12px;
+        line-height: 1.7;
+        color: #68736b;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .button-label {
+        font-size: 13px;
+        color: #68736b;
+        margin: 14px 0 0;
+      }
+      @media (max-width: 500px) {
+        .field {
+          align-items: stretch;
+        }
+        .field input,
+        .field button {
+          width: 100%;
+        }
+        .event {
+          flex-direction: column;
+        }
+        .event-main,
+        .event-edit {
+          flex-direction: column;
+        }
+        .event time {
+          text-align: left;
+        }
+        .question-actions {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="top">
+        <div class="brand">KOTO CLIP</div>
+        <div class="tag">INTERVIEW TIMESTAMP</div>
+      </header>
+      <h1>面接中の時刻記録</h1>
+      <p class="lead">
+        面接官が質問を言い終えた時点と、被験者が回答を終えた時点を、それぞれ別のボタンで記録します。各時刻はサーバー側で記録されます。
+      </p>
+      <section class="panel">
+        <div class="field">
+          <label for="session">セッションID</label><input id="session" maxlength="80" placeholder="例：P001" /><button
+            id="connect"
+            class="btn primary"
+          >
+            セッションを開始
+          </button>
+        </div>
+        <p class="hint">
+          被験者側システムでも同じセッションIDを使用してください。氏名・学籍番号などの個人情報は入力しないでください。
+        </p>
+        <div id="control" class="hidden">
+          <div class="progress" id="progress">未記録 9問</div>
+          <p class="hint">
+            記録済みの質問を再度記録すると確認が表示されます。「はい」を選ぶと、古いイベントと紐づく操作履歴を削除して、新しい記録を作成します。
+          </p>
+          <div class="field" style="margin-top: 12px">
+            <button id="download" class="btn secondary">記録CSVをダウンロード</button
+            ><button id="downloadOperations" class="btn secondary">操作履歴CSVをダウンロード</button
+            ><button id="undo" class="btn secondary">直前の記録操作を取り消す</button
+            ><button id="restart" class="btn secondary">同じIDで最初から記録し直す</button>
+          </div>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <div class="question-list" id="questions" aria-label="質問1から質問9の時刻記録"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <strong>操作手順</strong>
+        <ol class="hint">
+          <li>被験者側システムと同じセッションIDでセッションを開始します。</li>
+          <li>質問を読み上げ、言い終えた直後に「面接官の質問終了を記録」を押します。</li>
+          <li>被験者が回答を終えた直後に「被験者の回答終了を記録」を押します。</li>
+          <li>画面を下へスクロールし、質問1から質問9まで順に記録します。質問を選び直す必要はありません。</li>
+          <li>終了後、「記録CSVをダウンロード」で2種類の時刻を保存します。</li>
+          <li>
+            同じIDでやり直す場合は「同じIDで最初から記録し直す」を押します。このセッションの記録時刻だけが消去され、質問1から再開します。
+          </li>
+        </ol>
+        <p class="hint">
+          イベントCSVには現在有効な時刻、操作履歴CSVには記録・置換・修正・取消・リセットの操作時刻を保存します。置換時は旧イベントと紐づく操作記録を削除し、新しいイベントとして登録します。置換の取消では新しいイベントを削除し、旧イベントは復元しません。
+        </p>
+      </section>
+    </main>
+    <script>
+      const $ = (s) => document.querySelector(s);
+      let sessionId = '',
+        events = [],
+        eventLocks = new Set(),
+        busy = false;
+      const LABELS = {
+        interviewer_question_end: '面接官の質問終了',
+        participant_answer_end: '被験者の回答終了',
+        question_end: '面接官の質問終了（旧形式）'
+      };
+      function isInterviewerEnd(e) {
+        return e.event_type === 'interviewer_question_end' || e.event_type === 'question_end';
+      }
+      function eventExists(q, type) {
+        return events.some(
+          (e) =>
+            Number(e.question_id) === q &&
+            (type === 'interviewer_question_end' ? isInterviewerEnd(e) : e.event_type === type)
+        );
+      }
+      function setStatus(message, error = false) {
+        $('#status').textContent = message;
+        $('#status').classList.toggle('error', error);
+      }
+      function render() {
+        const completed = Array.from({ length: 9 }, (_, i) => i + 1).filter(
+          (q) => eventExists(q, 'interviewer_question_end') && eventExists(q, 'participant_answer_end')
+        ).length;
+        $('#progress').textContent = `完了 ${completed} / 9問（質問終了・回答終了の両方を記録）`;
+        $('#undo').disabled = busy || eventLocks.size > 0;
+        $('#restart').disabled = busy || eventLocks.size > 0;
+        const questions = $('#questions');
+        questions.replaceChildren();
+        for (let q = 1; q <= 9; q++) {
+          const card = document.createElement('section');
+          card.className = 'question-card';
+          const heading = document.createElement('h2');
+          heading.textContent = `質問${q}`;
+          card.append(heading);
+
+          const actions = document.createElement('div');
+          actions.className = 'question-actions';
+          for (const [eventType, label, buttonClass] of [
+            ['interviewer_question_end', '面接官が質問を言い終えた時刻', 'question-btn'],
+            ['participant_answer_end', '被験者が回答を終えた時刻', 'answer-btn']
+          ]) {
+            const action = document.createElement('div');
+            const description = document.createElement('p');
+            description.className = 'button-label';
+            description.textContent = label;
+            const button = document.createElement('button');
+            button.className = `btn ${buttonClass}`;
+            const exists = eventExists(q, eventType);
+            button.textContent = exists
+              ? eventType === 'interviewer_question_end'
+                ? '既存データを削除して質問終了を再記録'
+                : '既存データを削除して回答終了を再記録'
+              : `${label}を記録`;
+            button.disabled = busy || eventLocks.has(`${q}:${eventType}`) ||
+              (eventType === 'participant_answer_end' &&
+              !eventExists(q, 'interviewer_question_end'));
+            button.addEventListener('click', () => markEvent(eventType, q));
+            action.append(description, button);
+            actions.append(action);
+          }
+          card.append(actions);
+
+          const questionEvents = document.createElement('div');
+          questionEvents.className = 'question-events';
+          const relatedEvents = events.filter((event) =>
+            Number(event.question_id) === q
+          ).sort((a, b) => {
+            const order = (event) => isInterviewerEnd(event) ? 0 : 1;
+            return order(a) - order(b);
+          });
+          for (const event of relatedEvents) {
+            const row = document.createElement('div');
+            row.className = 'event';
+            const main = document.createElement('div');
+            main.className = 'event-main';
+            const name = document.createElement('strong');
+            name.textContent = LABELS[event.event_type] || event.event_type;
+            const time = document.createElement('time');
+            time.textContent = `${event.server_time} (UTC)`;
+            main.append(name, time);
+
+            const edit = document.createElement('div');
+            edit.className = 'event-edit';
+            const input = document.createElement('input');
+            input.type = 'datetime-local';
+            input.step = '0.001';
+            input.value = localDateTimeValue(event.server_epoch);
+            input.setAttribute('aria-label', `質問${q}の${LABELS[event.event_type]}時刻`);
+            const save = document.createElement('button');
+            save.className = 'btn secondary';
+            save.textContent = '時刻を修正';
+            save.disabled = busy;
+            save.addEventListener('click', () => correctEvent(event, input.value));
+            edit.append(input, save);
+            row.append(main, edit);
+            questionEvents.append(row);
+          }
+          if (relatedEvents.length) card.append(questionEvents);
+          questions.append(card);
+        }
+      }
+      function localDateTimeValue(epoch) {
+        const date = new Date(Number(epoch) * 1000);
+        const pad = (number, width = 2) => String(number).padStart(width, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`;
+      }
+      async function loadEvents() {
+        const r = await fetch(`/api/events?session_id=${encodeURIComponent(sessionId)}`);
+        const d = await r.json();
+        if (!r.ok) throw Error(d.error || '既存の記録を読み込めませんでした');
+        events = d.events || [];
+      }
+
+      $('#connect').addEventListener('click', async () => {
+        const requestedId = $('#session').value.trim();
+
+        if (!requestedId) {
+          setStatus('セッションIDを入力してください。', true);
+          return;
+        }
+
+        if (!/^[a-zA-Z0-9_-]{1,80}$/.test(requestedId)) {
+          setStatus('セッションIDは英数字、ハイフン、アンダースコアで入力してください。', true);
+          return;
+        }
+
+        $('#connect').disabled = true;
+
+        try {
+          const r = await fetch('/api/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: requestedId })
+          });
+
+          const d = await r.json();
+
+          if (!r.ok) {
+            throw Error(d.error || 'セッションを開始できません。');
+          }
+
+          sessionId = d.session_id;
+          $('#session').value = sessionId;
+          $('#session').disabled = false;
+          $('#connect').textContent = 'このIDでセッションを開始';
+          $('#control').classList.remove('hidden');
+
+          await loadEvents();
+
+          setStatus(`セッション ${sessionId} を開始しました。被験者側にも同じIDを設定してください。`);
+
+          render();
+        } catch (e) {
+          setStatus(e.message, true);
+        } finally {
+          $('#connect').disabled = false;
+        }
+      });
+
+      async function markEvent(eventType, q) {
+        const lock = `${q}:${eventType}`;
+        if (!sessionId || q < 1 || q > 9 || busy || eventLocks.has(lock)) return;
+        if (eventType === 'participant_answer_end' && !eventExists(q, 'interviewer_question_end')) {
+          setStatus(`先に質問${q}の「面接官の質問終了」を記録してください。`, true);
+          return;
+        }
+        eventLocks.add(lock);
+        render();
+        try {
+          let wasReplacement = false;
+          const submit = async (replaceExisting) => {
+            const response = await fetch('/api/events', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                session_id: sessionId,
+                question_id: q,
+                event_type: eventType,
+                client_time: new Date().toISOString(),
+                replace_existing: replaceExisting
+              })
+            });
+            const data = await response.json();
+            return { response, data };
+          };
+          let { response: r, data: d } = await submit(false);
+          if (r.status === 409 && d.code === 'existing_event') {
+            if (!window.confirm('既存のデータがあります。削除し、新しくデータを作成しますか？')) {
+              setStatus('既存のデータは変更していません。');
+              return;
+            }
+            wasReplacement = true;
+            ({ response: r, data: d } = await submit(true));
+          }
+          if (!r.ok) throw Error(d.error || '時刻を記録できませんでした');
+          events = events.filter((e) => {
+            if (Number(e.question_id) !== q) return true;
+            if (eventType === 'interviewer_question_end') return !isInterviewerEnd(e);
+            return e.event_type !== eventType;
+          });
+          events.push(d);
+          setStatus(
+            wasReplacement
+              ? `質問${d.question_id}の古いデータを削除し、新しい時刻を記録しました。`
+              : `質問${d.question_id}の「${LABELS[d.event_type]}」を記録しました。`
+          );
+        } catch (e) {
+          setStatus(e.message, true);
+        } finally {
+          eventLocks.delete(lock);
+          render();
+        }
+      }
+      async function correctEvent(event, value) {
+        if (!value || busy) {
+          setStatus('修正する日時を入力してください。', true);
+          return;
+        }
+        busy = true;
+        render();
+        try {
+          const r = await fetch('/api/events/correct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_id: sessionId,
+              question_id: Number(event.question_id),
+              event_type: event.event_type,
+              server_time: new Date(value).toISOString()
+            })
+          });
+          const d = await r.json();
+          if (!r.ok) throw Error(d.error || '時刻を修正できませんでした');
+          events = events.filter((item) => Number(item.id) !== Number(event.id));
+          events.push(d.event);
+          setStatus(`質問${event.question_id}の時刻を修正しました。`);
+        } catch (e) {
+          setStatus(e.message, true);
+        } finally {
+          busy = false;
+          render();
+        }
+      }
+      $('#download').addEventListener('click', () => {
+        if (!sessionId) {
+          setStatus('先にセッションを開始してください。', true);
+          return;
+        }
+        location.href = `/api/sessions/${encodeURIComponent(sessionId)}/export.csv`;
+      });
+      $('#downloadOperations').addEventListener('click', () => {
+        if (!sessionId) {
+          setStatus('先にセッションを開始してください。', true);
+          return;
+        }
+        location.href = `/api/sessions/${encodeURIComponent(sessionId)}/operations.csv`;
+      });
+      $('#undo').addEventListener('click', async () => {
+        if (!sessionId || busy || eventLocks.size > 0) return;
+        if (
+          !window.confirm(
+            '直前の記録操作を取り消しますか？新規記録・置換は対象の記録を削除し、時刻修正は修正前の時刻に戻します。置換前の記録は復元されません。'
+          )
+        )
+          return;
+        busy = true;
+        render();
+        try {
+          const r = await fetch('/api/events/undo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId })
+          });
+          const d = await r.json();
+          if (!r.ok) throw Error(d.error || '直前の操作を取り消せませんでした');
+          await loadEvents();
+          setStatus(
+            d.restored_previous
+              ? `質問${d.question_id}の時刻を修正前に戻しました。`
+              : `質問${d.question_id}の直前の記録を削除しました。`
+          );
+        } catch (e) {
+          setStatus(e.message, true);
+        } finally {
+          busy = false;
+          render();
+        }
+      });
+      $('#restart').addEventListener('click', async () => {
+        if (!sessionId || busy || eventLocks.size > 0) return;
+        const confirmed =
+          window.confirm(`セッション ${sessionId} の質問終了・回答終了の記録をすべて消去し、質問1から記録し直します。
+この操作は取り消せません。先に必要なCSVを保存してください。
+続行しますか？`);
+        if (!confirmed) return;
+        busy = true;
+        $('#restart').disabled = true;
+        try {
+          const r = await fetch('/api/session/reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId })
+          });
+          const d = await r.json();
+          if (!r.ok) throw Error(d.error || '記録をリセットできませんでした');
+          events = [];
+          setStatus(`セッション ${sessionId} の記録をリセットしました。質問1から記録できます。`);
+          render();
+        } catch (e) {
+          setStatus(e.message, true);
+        } finally {
+          busy = false;
+          $('#restart').disabled = false;
+          render();
+        }
+      });
+    </script>
+  </body>
+</html>
