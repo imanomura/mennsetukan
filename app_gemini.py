@@ -6,7 +6,7 @@ import socket
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request, Response
+from flask import Flask, jsonify, render_template, request, Response,  send_from_directory
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "koto_sync.sqlite3"
