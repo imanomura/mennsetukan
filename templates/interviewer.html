@@ -3,13 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>面接タイムスタンプ・動画区切り記録ツール</title>
+    <title>面接タイムスタンプ & 動画区切り記録ツール</title>
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-        max-width: 1000px;
+        max-width: 1400px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 15px;
         background-color: #f4f6f8;
         color: #333;
       }
@@ -17,23 +20,25 @@
         border-bottom: 3px solid #3182ce;
         padding-bottom: 8px;
         color: #2b6cb0;
-        font-size: 24px;
+        font-size: 22px;
+        margin-top: 0;
       }
       .card {
         background: white;
-        padding: 20px;
+        padding: 15px 20px;
         border-radius: 8px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
+        margin-bottom: 15px;
       }
       .flex-between {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
       }
 
-      input[type='text'],
-      input[type='time'] {
+      input[type='text'] {
         padding: 8px;
         border: 1px solid #ccc;
         border-radius: 4px;
@@ -64,11 +69,11 @@
       .btn-csv {
         background-color: #319795;
         color: white;
-        font-size: 16px;
-        padding: 10px 20px;
+        font-size: 15px;
+        padding: 10px 18px;
       }
 
-      /* 質問ボタンの状態スタイル */
+      /* 質問ボタンのスタイル */
       .btn-q {
         background-color: #ed8936;
         color: white;
@@ -87,6 +92,41 @@
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
       }
 
+      /* ★レイアウト分割（左右2カラム構造） */
+      .main-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        .main-container {
+          grid-template-columns: 1fr; /* 画面が狭い場合は1列化 */
+        }
+      }
+
+      /* ★画面スクロール時も動画エリアを左側に追従固定 */
+      .sticky-video-card {
+        position: sticky;
+        top: 15px; /* 画面最上部から15pxの位置で固定 */
+        z-index: 100;
+      }
+
+      .video-section {
+        background-color: #1a202c;
+        padding: 12px;
+        border-radius: 6px;
+        color: white;
+      }
+      video {
+        width: 100%;
+        max-height: 480px;
+        background: black;
+        border-radius: 4px;
+        display: block;
+      }
+
       .question-row {
         display: flex;
         align-items: center;
@@ -96,35 +136,20 @@
       }
       .q-title {
         font-weight: bold;
-        width: 70px;
-        font-size: 16px;
+        width: 65px;
+        font-size: 15px;
       }
       .recorded-time-label {
         font-size: 12px;
         color: #4a5568;
         margin-top: 4px;
       }
-
-      /* 動画プレイヤーエリア */
-      .video-section {
-        background-color: #edf2f7;
-        padding: 15px;
-        border-radius: 6px;
-        margin-top: 15px;
-      }
-      video {
-        width: 100%;
-        max-height: 360px;
-        background: black;
-        border-radius: 4px;
-        margin-top: 8px;
-      }
     </style>
   </head>
   <body>
     <h1>🎙️ 面接タイムスタンプ & 動画区切り記録ツール</h1>
 
-    <!-- 1. セッション初期化 -->
+    <!-- 1. ヘッダー：セッションID設定 -->
     <div class="card">
       <div class="flex-between">
         <div>
@@ -133,42 +158,45 @@
           <button class="btn-set" onclick="initSession()">確定・開始</button>
         </div>
         <div>
-          <button class="btn-undo" id="btn-undo-top" onclick="undoLastOperation()" disabled>
-            ↩️ 直前の記録を取り消す (Undo)
-          </button>
+          <button class="btn-undo" id="btn-undo-top" onclick="undoLastOperation()" disabled>↩️ Undo (取り消し)</button>
           <button class="btn-csv" id="btn-csv-top" onclick="downloadCSV()" disabled>📥 CSV出力</button>
         </div>
       </div>
-      <p id="session-status" style="margin: 8px 0 0 0; color: #e53e3e; font-weight: bold">
+      <p id="session-status" style="margin: 6px 0 0 0; color: #e53e3e; font-weight: bold; font-size: 13px">
         ※「確定・開始」ボタンを押すまで操作できません。
       </p>
     </div>
 
-    <!-- 2. 面接録画動画からの手動刻印モード（オプション） -->
-    <div class="card">
-      <details>
-        <summary style="font-weight: bold; cursor: pointer; color: #2b6cb0">
-          📹 事前録画した動画を見ながら後から区切る（クリックして開く）
-        </summary>
+    <!-- 2. メインエリア（左：固定動画 / 右：質問記録ボタン） -->
+    <div class="main-container">
+      <!-- 左カラム：画面スクロールしても最上部に固定される動画プレイヤー -->
+      <div class="card sticky-video-card">
+        <h3 style="margin-top: 0; margin-bottom: 8px; color: #2b6cb0">📹 面接録画動画</h3>
+        <p style="margin: 0 0 8px 0; font-size: 12px; color: #4a5568">
+          動画を読み込んで再生しながら、右側のボタンを押すと再生位置（秒数）を直接記録できます。
+        </p>
+        <input
+          type="file"
+          id="video-input"
+          accept="video/*"
+          onchange="loadVideo(event)"
+          style="margin-bottom: 8px; font-size: 12px"
+        />
+
         <div class="video-section">
-          <p style="margin: 0 0 8px 0; font-size: 13px; color: #4a5568">
-            事前に撮影した面接動画（MP4等）を読み込み、再生しながら下のボタンを押すと、**動画の再生位置（秒数）**を記録できます。
-          </p>
-          <input type="file" id="video-input" accept="video/*" onchange="loadVideo(event)" />
-          <br />
           <video id="video-player" controls></video>
-          <div style="margin-top: 6px; font-weight: bold; color: #2d3748" id="video-time-display">
-            再生時間: 00:00.0
+          <div style="margin-top: 8px; font-weight: bold; color: #cbd5e0; font-size: 14px" id="video-time-display">
+            再生位置: 00:00.0 (0.00秒)
           </div>
         </div>
-      </details>
-    </div>
+      </div>
 
-    <!-- 3. 質問記録テーブル -->
-    <div class="card">
-      <h2>質問コントロール (全9問)</h2>
-      <div id="questions-container"></div>
-      <div id="completion-notice" style="margin-top: 15px"></div>
+      <!-- 右カラム：質問コントロール（スクロール可能） -->
+      <div class="card">
+        <h2 style="margin-top: 0; font-size: 18px; color: #2d3748">質問コントロール (全9問)</h2>
+        <div id="questions-container"></div>
+        <div id="completion-notice" style="margin-top: 15px"></div>
+      </div>
     </div>
 
     <script>
@@ -183,41 +211,29 @@
           .toString()
           .padStart(2, '0');
         const s = (sec % 60).toFixed(1).padStart(4, '0');
-        document.getElementById('video-time-display').innerText = `再生時間: ${m}:${s} (${sec.toFixed(2)}秒)`;
+        document.getElementById('video-time-display').innerText = `再生位置: ${m}:${s} (${sec.toFixed(2)}秒)`;
       };
 
-      // 動画ファイルの読み込み処理（黒画面防止・メモリ最適化版）
+      // 動画読み込み処理（オブジェクトURL解放・エラーハンドリング付）
       function loadVideo(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        // 1. 以前生成したURLがあればメモリ解放してクリア
         if (videoPlayer.src && videoPlayer.src.startsWith('blob:')) {
           URL.revokeObjectURL(videoPlayer.src);
         }
 
-        // 2. 新しい Blob URL を生成してセット
         const videoURL = URL.createObjectURL(file);
         videoPlayer.src = videoURL;
-
-        // 3. 動画要素を明示的にロード
         videoPlayer.load();
 
-        // 4. メタデータ読み込み成功時の処理（1フレーム目を画面表示）
         videoPlayer.onloadedmetadata = function () {
-          // 再生位置を0秒にセットして1フレーム目を描画
           videoPlayer.currentTime = 0;
-          console.log('動画の読み込みに成功しました:', file.name);
         };
 
-        // 5. コーデック非対応などのエラーハンドリング
         videoPlayer.onerror = function () {
-          console.error('動画読み込みエラー:', videoPlayer.error);
           alert(
-            '⚠️ 動画を表示できませんでした。\n\n' +
-              '【考えられる原因】\n' +
-              '・ブラウザが対応していない形式（.mov / HEVC(H.265) 等）です。\n' +
-              '・H.264形式の .mp4 ファイルに変換して再度お試しください。'
+            '⚠️ 動画を表示できませんでした。H.264形式の.mp4ファイルでお試しいただくか、Safari等の別ブラウザをご利用ください。'
           );
         };
       }
@@ -245,8 +261,6 @@
             isSessionActive = true;
             document.getElementById('session-status').innerText = `✅ セッション設定完了: ${currentSessionId}`;
             document.getElementById('session-status').style.color = '#2b6cb0';
-
-            // ボタンの有効化
             toggleControlButtons(true);
             refreshEventsList();
           }
@@ -279,7 +293,7 @@
                         <button class="btn-a" id="btn-a-${i}" onclick="recordEvent(${i}, 'participant_answer_end')" disabled>解答終了</button>
                     </div>
                     <div style="text-align: right;">
-                        <button id="btn-manual-${i}" onclick="manualTimeInput(${i})" style="font-size: 11px; background: #e2e8f0;" disabled>✏️ 手動刻印/修正</button>
+                        <button id="btn-manual-${i}" onclick="manualTimeInput(${i})" style="font-size: 11px; background: #e2e8f0;" disabled>✏️ 手動刻印</button>
                         <div class="recorded-time-label" id="time-label-${i}">未記録</div>
                     </div>
                 `;
@@ -287,7 +301,7 @@
         }
       }
 
-      // イベント記録処理（押し直し・動画位置同期対応）
+      // イベント記録処理
       async function recordEvent(questionId, eventType, specifiedISOString = null) {
         if (!isSessionActive) {
           alert('先にセッションを設定してください。');
@@ -302,13 +316,12 @@
           replace_existing: true
         };
 
-        // 指定手動時刻がある場合
         if (specifiedISOString) {
           payload.manual_time = specifiedISOString;
         }
 
-        // 動画が読み込まれて再生中の場合、動画の現在位置（秒）を送信
-        if (videoPlayer.src && !videoPlayer.paused) {
+        // 動画がセットされていれば再生位置（秒）を記録
+        if (videoPlayer.src) {
           payload.video_time_sec = videoPlayer.currentTime;
         }
 
@@ -330,7 +343,7 @@
         }
       }
 
-      // 人の手による手動時刻修正（hh:mm:ss 入力ダイアログ）
+      // 手動時刻入力
       function manualTimeInput(questionId) {
         const inputTime = prompt(`質問 ${questionId} の刻印時刻を直接指定してください (形式: HH:MM:SS)`, '12:00:00');
         if (!inputTime) return;
@@ -339,7 +352,6 @@
           ? 'interviewer_question_end'
           : 'participant_answer_end';
 
-        // 今日の日付と結合して ISO フォーマット生成
         const today = new Date().toISOString().split('T')[0];
         const targetISO = new Date(`${today}T${inputTime}Z`).toISOString();
 
@@ -364,7 +376,7 @@
         }
       }
 
-      // 状態および画面表示（ボタン色・テキスト・更新時刻）のリアルタイム書き換え
+      // 状態・ボタン表示書き換え
       async function refreshEventsList() {
         if (!isSessionActive) return;
         try {
@@ -372,7 +384,6 @@
           const data = await res.json();
           if (!data.events) return;
 
-          // 表示リセット
           for (let i = 1; i <= 9; i++) {
             const btnQ = document.getElementById(`btn-q-${i}`);
             const btnA = document.getElementById(`btn-a-${i}`);
@@ -383,14 +394,16 @@
             document.getElementById(`time-label-${i}`).innerText = '未記録';
           }
 
-          // イベント情報の反映（最新の押し直し結果を表示）
           const eventSummary = {};
           data.events.forEach((ev) => {
             const q = ev.question_id;
             if (!eventSummary[q]) eventSummary[q] = {};
 
             const timeStr = new Date(ev.server_time).toLocaleTimeString('ja-JP');
-            const videoSecStr = ev.video_time_sec ? ` (${ev.video_time_sec.toFixed(1)}秒位置)` : '';
+            const videoSecStr =
+              ev.video_time_sec !== null && ev.video_time_sec !== undefined
+                ? ` (${ev.video_time_sec.toFixed(1)}秒位置)`
+                : '';
 
             if (ev.event_type === 'interviewer_question_end' || ev.event_type === 'question_end') {
               eventSummary[q].qTime = timeStr + videoSecStr;

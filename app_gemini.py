@@ -226,6 +226,18 @@ def export_events(session_id):
         ])
     return Response("\ufeff" + output.getvalue(), mimetype="text/csv; charset=utf-8",
                     headers={"Content-Disposition": f"attachment; filename={session_id}_interview_events.csv"})
+    from flask import send_from_directory
+
+# 録画動画をブラウザへストリーミング配信するエンドポイント
+@app.route('/api/video/stream')
+def stream_video():
+    filepath = request.args.get('path', '').strip()
+    if not filepath or not os.path.exists(filepath):
+        return jsonify(error="指定された動画ファイルが見つかりません。"), 404
+    
+    dirname = os.path.dirname(filepath)
+    filename = os.path.basename(filepath)
+    return send_from_directory(dirname, filename)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=False)
