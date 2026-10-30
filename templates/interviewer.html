@@ -129,6 +129,7 @@
 
       .question-row {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
         padding: 10px 0;
@@ -143,6 +144,23 @@
         font-size: 12px;
         color: #4a5568;
         margin-top: 4px;
+      }
+      .q-script {
+        flex-basis: 100%;
+        background: #fffaf0;
+        border-left: 4px solid #ed8936;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .script-box {
+        background: #ebf8ff;
+        border-left: 4px solid #3182ce;
+        padding: 8px 12px;
+        margin: 10px 0;
+        font-size: 14px;
+        line-height: 1.6;
       }
     </style>
   </head>
@@ -194,12 +212,29 @@
       <!-- 右カラム：質問コントロール（スクロール可能） -->
       <div class="card">
         <h2 style="margin-top: 0; font-size: 18px; color: #2d3748">質問コントロール (全9問)</h2>
+        <div class="script-box">面接官「おはようございます。音声聞こえていますでしょうか」</div>
         <div id="questions-container"></div>
+        <div class="script-box">
+          {% raw
+          %}面接官「ありがとうございます。これで面接は終わりです。本日はありがとうございました。お疲れ様でした。○○さんの方から退出ボタンを押して退出していただいてかまいません」{%
+          endraw %}
+        </div>
         <div id="completion-notice" style="margin-top: 15px"></div>
       </div>
     </div>
 
     <script>
+      const QUESTION_TEXTS = {
+        1: 'ありがとうございます。では、面接を始めさせていただきます。1分程度で趣味や特技、大学で学んでいることを交えて簡単に自己紹介をして下さい',
+        2: 'ありがとうございます。では次に、志望動機を教えてください',
+        3: '弊社を知ったきっかけを教えてください',
+        4: '学生時代力を入れたことを教えてください',
+        5: 'あなたの長所とその長所が表れた経験を教えてください',
+        6: 'あなたの短所とその短所を解決するために取り組んでいることを教えてください',
+        7: '人生で挫折した経験を教えて下さい',
+        8: 'あなたの就職活動の軸を教えてください',
+        9: '5年後、10年後に弊社でどう成長していたいか、ビジョンをお願いします'
+      };
       let currentSessionId = '';
       let isSessionActive = false;
       const videoPlayer = document.getElementById('video-player');
@@ -287,16 +322,17 @@
           const row = document.createElement('div');
           row.className = 'question-row';
           row.innerHTML = `
-                    <div class="q-title">質問 ${i}</div>
-                    <div>
-                        <button class="btn-q" id="btn-q-${i}" onclick="recordEvent(${i}, 'interviewer_question_end')" disabled>質問終了</button>
-                        <button class="btn-a" id="btn-a-${i}" onclick="recordEvent(${i}, 'participant_answer_end')" disabled>解答終了</button>
-                    </div>
-                    <div style="text-align: right;">
-                        <button id="btn-manual-${i}" onclick="manualTimeInput(${i})" style="font-size: 11px; background: #e2e8f0;" disabled>✏️ 手動刻印</button>
-                        <div class="recorded-time-label" id="time-label-${i}">未記録</div>
-                    </div>
-                `;
+              <div class="q-script">面接官「${QUESTION_TEXTS[i]}」</div>   <!-- ★この1行を追加 -->
+              <div class="q-title">質問 ${i}</div>
+              <div>
+                  <button class="btn-q" id="btn-q-${i}" onclick="recordEvent(${i}, 'interviewer_question_end')" disabled>質問終了</button>
+                  <button class="btn-a" id="btn-a-${i}" onclick="recordEvent(${i}, 'participant_answer_end')" disabled>解答終了</button>
+              </div>
+              <div style="text-align: right;">
+                  <button id="btn-manual-${i}" onclick="manualTimeInput(${i})" style="font-size: 11px; background: #e2e8f0;" disabled>✏️ 手動刻印</button>
+                  <div class="recorded-time-label" id="time-label-${i}">未記録</div>
+              </div>
+          `;
           container.appendChild(row);
         }
       }
