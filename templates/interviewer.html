@@ -135,10 +135,12 @@
         padding: 10px 0;
         border-bottom: 1px solid #eee;
       }
-      .q-title {
+      .q-heading {
+        flex-basis: 100%;
         font-weight: bold;
-        width: 65px;
         font-size: 15px;
+        color: #c05621;
+        margin-bottom: 4px;
       }
       .recorded-time-label {
         font-size: 12px;
@@ -322,8 +324,8 @@
           const row = document.createElement('div');
           row.className = 'question-row';
           row.innerHTML = `
-              <div class="q-script">面接官「${QUESTION_TEXTS[i]}」</div>   <!-- ★この1行を追加 -->
-              <div class="q-title">質問 ${i}</div>
+              <div class="q-heading">質問 ${i}</div> 
+              <div class="q-script">面接官「${QUESTION_TEXTS[i]}」</div> 
               <div>
                   <button class="btn-q" id="btn-q-${i}" onclick="recordEvent(${i}, 'interviewer_question_end')" disabled>質問終了</button>
                   <button class="btn-a" id="btn-a-${i}" onclick="recordEvent(${i}, 'participant_answer_end')" disabled>解答終了</button>
